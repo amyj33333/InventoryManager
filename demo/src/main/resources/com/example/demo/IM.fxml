@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.IMController">
+    <GridPane fx:id="gridPane" alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+        <VBox alignment="CENTER" prefHeight="301.0" prefWidth="387.0" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <Text fx:id="text" strokeType="OUTSIDE" strokeWidth="3.0" text="Inventory Management System">
+            <font>
+               <Font size="16.0" />
+            </font></Text>
+            <Button onAction="#showAddItemDialog" text="Add Item" />
+            <Button onAction="#showUpdateQuantityDialog" text="Update Quantity" />
+            <Button onAction="#showRemoveItemDialog" text="Remove Item" />
+            <Button onAction="#showSearchItemDialog" text="Search for Item" />
+            <Button onAction="#showDailyTransactionReportDialog" text="View Daily Transaction Report" />
+        </VBox>
+      <columnConstraints>
+         <ColumnConstraints />
+      </columnConstraints>
+      <rowConstraints>
+         <RowConstraints />
+      </rowConstraints>
+    </GridPane>
+</AnchorPane>
