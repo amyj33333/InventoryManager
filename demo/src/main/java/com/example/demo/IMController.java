@@ -8,14 +8,30 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
-public class IMController {
+public class IMController implements AutoCloseable {
+
+    private static Connection connection;
+
+    public IMController() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            String url = "jdbc:mysql://localhost/inventory_management";
+            String user = "s256945";
+            String password = "@RootUser1";
+            connection = DriverManager.getConnection(url, user, password);
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            Utils.showAlert("Error", "Failed to connect to the database: " + e.getMessage());
+        }
+    }
+
     @FXML
-    public void showAddItemDialog(Connection connection) {
+    private void addItemGui() {
         Dialog<Pair<String, Double>> dialog = new Dialog<>();
         dialog.setTitle("Add Item");
         dialog.setHeaderText("Enter Item Details");
@@ -63,9 +79,6 @@ public class IMController {
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButton) {
                 try {
-                    // Validate inputs
-                    Utils.validateInputs(description.getText(), unitPrice.getText(), quantity.getText());
-
                     return new Pair<>(description.getText(), Double.parseDouble(unitPrice.getText()));
                 } catch (NumberFormatException e) {
                     Utils.showAlert("Error", "Invalid input for unit price or quantity.");
@@ -77,14 +90,15 @@ public class IMController {
         });
 
         dialog.showAndWait().ifPresent(result -> {
-            InventoryManager.addNewItem(connection, result.getKey(), result.getValue(), Integer.parseInt(quantity.getText()), result.getValue() * Integer.parseInt(quantity.getText()));
-            InventoryManager.fetchDailyTransactions(connection);
+            IMActions.addNewItem(connection, result.getKey(), result.getValue(), Integer.parseInt(quantity.getText()), result.getValue() * Integer.parseInt(quantity.getText()));
+            IMActions.fetchDailyTransactions(connection);
+            Utils.showSuccess("Item added successfully.");
         });
     }
 
 
     @FXML
-    public void showUpdateQuantityDialog(Connection connection) {
+    private void updateQuantityGui() {
         Dialog<Pair<String, Integer>> dialog = new Dialog<>();
         dialog.setTitle("Update Quantity");
         dialog.setHeaderText("Enter Item description");
@@ -98,6 +112,13 @@ public class IMController {
         grid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
 
         TextField description = new TextField();
+
+        // Set up real-time input validation
+        description.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("[a-zA-Z0-9]*")) {
+                description.setText(oldValue);
+            }
+        });
 
         grid.add(new Label("Item description:"), 0, 0);
         grid.add(description, 1, 0);
@@ -125,6 +146,14 @@ public class IMController {
                     updateGrid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
 
                     TextField newQuantity = new TextField();
+
+                    // Set up real-time input validation for quantity
+                    newQuantity.textProperty().addListener((observable, oldValue, newValue) -> {
+                        if (!newValue.matches("\\d*")) {
+                            newQuantity.setText(oldValue);
+                        }
+                    });
+
                     updateGrid.add(currentQuantityLabel, 0, 0);
                     updateGrid.add(currentQuantityValue, 1, 0);
                     updateGrid.add(new Label("New quantity:"), 0, 1);
@@ -135,8 +164,7 @@ public class IMController {
                     updateDialog.setResultConverter(updateDialogButton -> {
                         if (updateDialogButton == updateButton) {
                             try {
-                                int updatedQty = Integer.parseInt(newQuantity.getText());
-                                return updatedQty;
+                                return Integer.parseInt(newQuantity.getText());
                             } catch (NumberFormatException e) {
                                 Utils.showAlert("Error", "Invalid input for new quantity.");
                             }
@@ -144,24 +172,23 @@ public class IMController {
                         return null;
                     });
 
-                    Optional<Integer> newQtyResult = updateDialog.showAndWait();
-                    return newQtyResult.map(newQty -> new Pair<>(itemDescription, newQty)).orElse(null);
+                    updateDialog.showAndWait().ifPresent(result -> {
+                        IMActions.updateItemQuantity(connection, itemDescription, result);
+                        IMActions.fetchDailyTransactions(connection);
+                        Utils.showSuccess("Item quantity updated successfully.");
+                    });
                 } else {
                     Utils.showAlert("Item Not Found", "No item found with the given description.");
                 }
             }
             return null;
         });
-
-        dialog.showAndWait().ifPresent(result -> {
-            InventoryManager.updateItemQuantity(connection, result.getKey(), result.getValue());
-            InventoryManager.fetchDailyTransactions(connection);
-        });
+        dialog.showAndWait();
     }
 
 
     @FXML
-    public void showRemoveItemDialog(Connection connection) {
+    private void removeItemGui() {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Remove Item");
         dialog.setHeaderText("Enter Item description to Remove");
@@ -189,13 +216,14 @@ public class IMController {
         });
 
         dialog.showAndWait().ifPresent(result -> {
-            InventoryManager.removeItem(connection, result);
-            InventoryManager.fetchDailyTransactions(connection);
+            IMActions.removeItem(connection, result);
+            IMActions.fetchDailyTransactions(connection);
+            Utils.showSuccess("Item removed successfully.");
         });
     }
 
     @FXML
-    public void showSearchItemDialog(Connection connection) {
+    private void searchItemGui() {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Search for Item");
         dialog.setHeaderText("Enter Item description to Search");
@@ -222,11 +250,11 @@ public class IMController {
             return null;
         });
 
-        dialog.showAndWait().ifPresent(result -> InventoryManager.searchForItem(connection, result));
+        dialog.showAndWait().ifPresent(result -> IMActions.searchForItem(connection, result));
     }
 
     @FXML
-    public void showDailyTransactionReportDialog(Connection connection) {
+    private void dailyTransactionReportGui() {
         // Create a new Stage
         Stage stage = new Stage();
         stage.setTitle("Daily Transactions Report");
@@ -281,5 +309,12 @@ public class IMController {
 
         // Show the Stage
         stage.show();
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (connection != null && !connection.isClosed()) {
+            connection.close();
+        }
     }
 }

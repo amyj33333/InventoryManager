@@ -11,11 +11,11 @@
             <font>
                <Font size="16.0" />
             </font></Text>
-            <Button onAction="#showAddItemDialog" text="Add Item" />
-            <Button onAction="#showUpdateQuantityDialog" text="Update Quantity" />
-            <Button onAction="#showRemoveItemDialog" text="Remove Item" />
-            <Button onAction="#showSearchItemDialog" text="Search for Item" />
-            <Button onAction="#showDailyTransactionReportDialog" text="View Daily Transaction Report" />
+            <Button onAction="#addItemGui" text="Add Item" />
+            <Button onAction="#updateQuantityGui" text="Update Quantity" />
+            <Button onAction="#removeItemGui" text="Remove Item" />
+            <Button onAction="#searchItemGui" text="Search for Item" />
+            <Button onAction="#dailyTransactionReportGui" text="View Daily Transaction Report" />
         </VBox>
       <columnConstraints>
          <ColumnConstraints />
