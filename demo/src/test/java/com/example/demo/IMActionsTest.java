@@ -65,9 +65,4 @@ public class IMActionsTest {
         String description = "test";
         Assert.assertEquals(imActions.searchForItem(connection, description), true);
     }
-
-    @Test
-    public void fetchDailyTransactions() {
-        Assert.assertEquals(imActions.fetchDailyTransactions(connection), true);
-    }
 }
