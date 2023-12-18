@@ -14,15 +14,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IMController implements AutoCloseable {
-
     private static Connection connection;
 
     public IMController() {
         try {
+            // Load the MySQL JDBC driver
             Class.forName("com.mysql.cj.jdbc.Driver");
             String url = "jdbc:mysql://localhost/inventory_management";
             String user = "s256945";
             String password = "@RootUser1";
+            // Create the connection to the database
             connection = DriverManager.getConnection(url, user, password);
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
@@ -30,6 +31,7 @@ public class IMController implements AutoCloseable {
         }
     }
 
+    // Add a new item to the inventory
     @FXML
     public void addItemGui() {
         Dialog<Pair<String, Double>> dialog = new Dialog<>();
@@ -54,13 +56,11 @@ public class IMController implements AutoCloseable {
                 description.setText(oldValue);
             }
         });
-
         unitPrice.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.matches("\\d*(\\.\\d{0,2})?")) {
                 unitPrice.setText(oldValue);
             }
         });
-
         quantity.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.matches("\\d*")) {
                 quantity.setText(oldValue);
@@ -91,12 +91,12 @@ public class IMController implements AutoCloseable {
 
         dialog.showAndWait().ifPresent(result -> {
             IMActions.addNewItem(connection, result.getKey(), result.getValue(), Integer.parseInt(quantity.getText()), result.getValue() * Integer.parseInt(quantity.getText()));
-            IMActions.fetchDailyTransactions(connection);
             Utils.showAlert("Item added successfully.", "Item ID: " + Utils.getItemId(connection, result.getKey()), Alert.AlertType.CONFIRMATION);
         });
     }
 
 
+    // Update the quantity of an existing item
     @FXML
     private void updateQuantityGui() {
         Dialog<Pair<String, Integer>> dialog = new Dialog<>();
@@ -125,6 +125,7 @@ public class IMController implements AutoCloseable {
 
         dialog.getDialogPane().setContent(grid);
 
+        // Search for the item in the database
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == searchButton) {
                 String itemDescription = description.getText();
@@ -174,7 +175,6 @@ public class IMController implements AutoCloseable {
 
                     updateDialog.showAndWait().ifPresent(result -> {
                         IMActions.updateItemQuantity(connection, itemDescription, result);
-                        IMActions.fetchDailyTransactions(connection);
                         Utils.showAlert("Item quantity updated successfully.", "New quantity: " + result, Alert.AlertType.CONFIRMATION);
                     });
                 } else {
@@ -187,6 +187,7 @@ public class IMController implements AutoCloseable {
     }
 
 
+    // Remove an item from the inventory
     @FXML
     private void removeItemGui() {
         Dialog<String> dialog = new Dialog<>();
@@ -217,11 +218,11 @@ public class IMController implements AutoCloseable {
 
         dialog.showAndWait().ifPresent(result -> {
             IMActions.removeItem(connection, result);
-            IMActions.fetchDailyTransactions(connection);
             Utils.showAlert("Item removed successfully.", "Item description: " + result, Alert.AlertType.CONFIRMATION);
         });
     }
 
+    // Search for an item in the inventory
     @FXML
     private void searchItemGui() {
         Dialog<String> dialog = new Dialog<>();
@@ -253,16 +254,14 @@ public class IMController implements AutoCloseable {
         dialog.showAndWait().ifPresent(result -> IMActions.searchForItem(connection, result));
     }
 
+    // Show the daily transactions report
     @FXML
     private void dailyTransactionReportGui() {
-        // Create a new Stage
         Stage stage = new Stage();
         stage.setTitle("Daily Transactions Report");
 
-        // Create a TableView
         TableView<Map<String, Object>> tableView = new TableView<>();
 
-        // Create TableColumn instances for each field in the ResultSet
         TableColumn<Map<String, Object>, Integer> itemIdColumn = new TableColumn<>("Item ID");
         itemIdColumn.setCellValueFactory(data -> new SimpleObjectProperty<>((Integer) data.getValue().get("itemId")));
 
@@ -281,7 +280,6 @@ public class IMController implements AutoCloseable {
         TableColumn<Map<String, Object>, Timestamp> transactionDateColumn = new TableColumn<>("Transaction Date");
         transactionDateColumn.setCellValueFactory(data -> new SimpleObjectProperty<>((Timestamp) data.getValue().get("transactionDate")));
 
-        // Add columns to the TableView
         tableView.getColumns().addAll(itemIdColumn, transactionTypeColumn, quantityChangedColumn, stockRemainingColumn, amountColumn, transactionDateColumn);
 
         // Fetch and add daily transactions to the TableView using Map
@@ -295,7 +293,6 @@ public class IMController implements AutoCloseable {
                 data.put("stockRemaining", resultSet.getInt("stockRemaining"));
                 data.put("amount", resultSet.getDouble("amount"));
 
-                // Add data to the TableView
                 tableView.getItems().add(data);
             }
         } catch (SQLException e) {
@@ -303,11 +300,8 @@ public class IMController implements AutoCloseable {
             Utils.showAlert("Error", "Failed to fetch daily transactions: " + e.getMessage(), Alert.AlertType.ERROR);
         }
 
-        // Create a Scene with the TableView and set it to the Stage
         Scene scene = new Scene(new BorderPane(tableView), 800, 600);
         stage.setScene(scene);
-
-        // Show the Stage
         stage.show();
     }
 

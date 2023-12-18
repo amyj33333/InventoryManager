@@ -1,38 +1,71 @@
 package com.example.demo;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import javafx.scene.control.Alert;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
-class UtilsTest {
 
-    @BeforeEach
-    void setUp() {
+public class UtilsTest {
+    private Utils utils;
+    private static Connection connection;
+
+    @Before
+    public void setUp() throws ClassNotFoundException, SQLException {
+        utils = new Utils();
+
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        String url = "jdbc:mysql://localhost/inventory_management";
+        String user = "s256945";
+        String password = "@RootUser1";
+        connection = DriverManager.getConnection(url, user, password);
     }
 
-    @AfterEach
-    void tearDown() {
+    @After
+    public void tearDown() throws SQLException {
+        if (connection != null) {
+            connection.close();
+        }
     }
 
     @Test
-    void getCurrentQuantity() {
+    public void getCurrentQuantity() {
+        String description = "test";
+        utils.getCurrentQuantity(connection, description);
     }
 
     @Test
-    void generateItemId() {
+    public void generateItemId() {
+        utils.generateItemId(connection);
     }
 
     @Test
-    void getItemId() {
+    public void getItemId() {
+        String description = "test";
+        utils.getItemId(connection, description);
     }
 
     @Test
-    void logTransaction() {
+    public void logTransaction() {
+        int itemId = 00001;
+        String transactionType = "ADD";
+        int quantityChanged = 10;
+        int stockRemaining = 10;
+        double amount = 100.00;
+        java.sql.Timestamp transactionDate = java.sql.Timestamp.valueOf(java.time.LocalDateTime.now());
+        utils.logTransaction(connection, itemId, transactionType, quantityChanged, stockRemaining, amount, transactionDate);
     }
 
     @Test
-    void showAlert() {
+    public void showAlertTest() {
+        String title = "Error";
+        String content = "Failed to get current quantity";
+        Alert.AlertType alertType = Alert.AlertType.ERROR;
+
+        utils.showAlert(title, content, alertType);
     }
 }

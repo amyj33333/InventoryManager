@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +12,7 @@ import java.sql.SQLException;
 
 public class IMActionsTest {
     private IMActions imActions;
-    private Connection connection;
+    private static Connection connection;
 
     @Before
     public void setUp() throws ClassNotFoundException, SQLException {
@@ -22,6 +23,13 @@ public class IMActionsTest {
         String user = "s256945";
         String password = "@RootUser1";
         connection = DriverManager.getConnection(url, user, password);
+    }
+
+    @After
+    public void tearDown() throws SQLException {
+        if (connection != null) {
+            connection.close();
+        }
     }
 
     @Test
@@ -45,6 +53,14 @@ public class IMActionsTest {
     }
 
     @Test
+    public void removeItem() {
+        String description = "test";
+        imActions.removeItem(connection, description);
+
+        Assert.assertEquals(imActions.searchForItem(connection, description), false);
+    }
+
+    @Test
     public void searchForItem() {
         String description = "test";
         Assert.assertEquals(imActions.searchForItem(connection, description), true);
@@ -53,13 +69,5 @@ public class IMActionsTest {
     @Test
     public void fetchDailyTransactions() {
         Assert.assertEquals(imActions.fetchDailyTransactions(connection), true);
-    }
-
-    @Test
-    public void removeItem() {
-        String description = "test";
-        imActions.removeItem(connection, description);
-
-        Assert.assertEquals(imActions.searchForItem(connection, description), false);
     }
 }
