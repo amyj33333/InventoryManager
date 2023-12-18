@@ -26,12 +26,12 @@ public class IMController implements AutoCloseable {
             connection = DriverManager.getConnection(url, user, password);
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to connect to the database: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to connect to the database: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
     @FXML
-    private void addItemGui() {
+    public void addItemGui() {
         Dialog<Pair<String, Double>> dialog = new Dialog<>();
         dialog.setTitle("Add Item");
         dialog.setHeaderText("Enter Item Details");
@@ -81,9 +81,9 @@ public class IMController implements AutoCloseable {
                 try {
                     return new Pair<>(description.getText(), Double.parseDouble(unitPrice.getText()));
                 } catch (NumberFormatException e) {
-                    Utils.showAlert("Error", "Invalid input for unit price or quantity.");
+                    Utils.showAlert("Error", "Invalid input for unit price or quantity.", Alert.AlertType.ERROR);
                 } catch (IllegalArgumentException e) {
-                    Utils.showAlert("Error", e.getMessage());
+                    Utils.showAlert("Error", e.getMessage(), Alert.AlertType.ERROR);
                 }
             }
             return null;
@@ -92,7 +92,7 @@ public class IMController implements AutoCloseable {
         dialog.showAndWait().ifPresent(result -> {
             IMActions.addNewItem(connection, result.getKey(), result.getValue(), Integer.parseInt(quantity.getText()), result.getValue() * Integer.parseInt(quantity.getText()));
             IMActions.fetchDailyTransactions(connection);
-            Utils.showSuccess("Item added successfully.");
+            Utils.showAlert("Item added successfully.", "Item ID: " + Utils.getItemId(connection, result.getKey()), Alert.AlertType.CONFIRMATION);
         });
     }
 
@@ -166,7 +166,7 @@ public class IMController implements AutoCloseable {
                             try {
                                 return Integer.parseInt(newQuantity.getText());
                             } catch (NumberFormatException e) {
-                                Utils.showAlert("Error", "Invalid input for new quantity.");
+                                Utils.showAlert("Error", "Invalid input for new quantity.", Alert.AlertType.ERROR);
                             }
                         }
                         return null;
@@ -175,10 +175,10 @@ public class IMController implements AutoCloseable {
                     updateDialog.showAndWait().ifPresent(result -> {
                         IMActions.updateItemQuantity(connection, itemDescription, result);
                         IMActions.fetchDailyTransactions(connection);
-                        Utils.showSuccess("Item quantity updated successfully.");
+                        Utils.showAlert("Item quantity updated successfully.", "New quantity: " + result, Alert.AlertType.CONFIRMATION);
                     });
                 } else {
-                    Utils.showAlert("Item Not Found", "No item found with the given description.");
+                    Utils.showAlert("Item Not Found", "No item found with the given description.", Alert.AlertType.ERROR);
                 }
             }
             return null;
@@ -218,7 +218,7 @@ public class IMController implements AutoCloseable {
         dialog.showAndWait().ifPresent(result -> {
             IMActions.removeItem(connection, result);
             IMActions.fetchDailyTransactions(connection);
-            Utils.showSuccess("Item removed successfully.");
+            Utils.showAlert("Item removed successfully.", "Item description: " + result, Alert.AlertType.CONFIRMATION);
         });
     }
 
@@ -300,7 +300,7 @@ public class IMController implements AutoCloseable {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to fetch daily transactions: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to fetch daily transactions: " + e.getMessage(), Alert.AlertType.ERROR);
         }
 
         // Create a Scene with the TableView and set it to the Stage

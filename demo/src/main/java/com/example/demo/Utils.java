@@ -4,6 +4,8 @@ import javafx.scene.control.Alert;
 
 import java.sql.*;
 
+import static java.lang.Integer.parseInt;
+
 public class Utils {
     static int getCurrentQuantity(Connection connection, String description) {
         try (PreparedStatement statement = connection.prepareStatement("SELECT quantity FROM items WHERE description = ?")) {
@@ -14,12 +16,12 @@ public class Utils {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            showAlert("Error", "Failed to get current quantity: " + e.getMessage());
+            showAlert("Error", "Failed to get current quantity: " + e.getMessage(), Alert.AlertType.ERROR);
         }
         return 0; // Default to 0 if there's an error
     }
 
-    static int generateItemId(Connection connection) {
+    public static int generateItemId(Connection connection) {
         int itemId = 0;
         try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery("SELECT MAX(itemId) FROM items")) {
             if (resultSet.next()) {
@@ -27,10 +29,13 @@ public class Utils {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to generate item ID: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to generate item ID: " + e.getMessage(), Alert.AlertType.ERROR);
         }
-        return itemId;
+
+        // Format the itemId as a 5-digit string with leading zeros
+        return parseInt(String.format("%05d", itemId));
     }
+
 
     static int getItemId(Connection connection, String description) {
         try (PreparedStatement statement = connection.prepareStatement("SELECT itemId FROM items WHERE description = ?")) {
@@ -41,7 +46,7 @@ public class Utils {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to get item ID: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to get item ID: " + e.getMessage(), Alert.AlertType.ERROR);
         }
         return 0;
     }
@@ -57,21 +62,13 @@ public class Utils {
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to log transaction: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to log transaction: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
-    static void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+    static void showAlert(String title, String content, Alert.AlertType alertType) {
+        Alert alert = new Alert(alertType);
         alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
-    }
-
-    static void showSuccess(String content) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Success");
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();

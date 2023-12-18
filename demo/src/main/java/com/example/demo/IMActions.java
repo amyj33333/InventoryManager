@@ -18,7 +18,7 @@ public class IMActions {
             Utils.logTransaction(connection, itemId, "ADD", quantity, quantity, totalValue, Timestamp.valueOf(java.time.LocalDateTime.now()));
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to add item: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to add item: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -31,7 +31,7 @@ public class IMActions {
             Utils.logTransaction(connection, Utils.getItemId(connection, description), "UPDATE", Math.abs(oldQuantity - newQuantity), newQuantity, 0, Timestamp.valueOf(java.time.LocalDateTime.now()));
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to update item quantity: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to update item quantity: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -42,11 +42,11 @@ public class IMActions {
             Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -Utils.getCurrentQuantity(connection, description), 0, 0, Timestamp.valueOf(java.time.LocalDateTime.now()));
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to remove item: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to remove item: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
-    static void searchForItem(Connection connection, String description) {
+    static Object searchForItem(Connection connection, String description) {
         try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM items WHERE description = ?")) {
             statement.setString(1, description);
             ResultSet resultSet = statement.executeQuery();
@@ -62,15 +62,16 @@ public class IMActions {
                 alert.setContentText("Description: " + description + "\n" + "Unit Price: £" + unitPrice + "\n" + "Quantity: " + quantity + "\n" + "Total Value: £" + totalValue);
                 alert.showAndWait();
             } else {
-                Utils.showAlert("Item Not Found", "No item found with the given description.");
+                Utils.showAlert("Item Not Found", "No item found with the given description.", Alert.AlertType.ERROR);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to search for item: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to search for item: " + e.getMessage(), Alert.AlertType.ERROR);
         }
+        return null;
     }
 
-    static void fetchDailyTransactions(Connection connection) {
+    static Object fetchDailyTransactions(Connection connection) {
         try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery("SELECT * FROM transactions WHERE transactionDate >= CURDATE()")) {
             while (resultSet.next()) {
                 int itemId = resultSet.getInt("itemId");
@@ -85,7 +86,8 @@ public class IMActions {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to fetch daily transactions: " + e.getMessage());
+            Utils.showAlert("Error", "Failed to fetch daily transactions: " + e.getMessage(), Alert.AlertType.ERROR);
         }
+        return null;
     }
 }
