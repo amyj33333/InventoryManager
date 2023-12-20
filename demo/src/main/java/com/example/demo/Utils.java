@@ -56,15 +56,16 @@ public class Utils {
     }
 
     // Log a transaction to the database
-    static void logTransaction(Connection connection, int itemId, String transactionType, int quantityChanged, int stockRemaining, double amount, Timestamp transactionDate) {
+    static void logTransaction(Connection connection, int itemId, String description, String transactionType, int quantityChanged, int stockRemaining, double amount, Timestamp transactionDate) {
         // Insert a new row into the transactions table
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO transactions (itemId, transactionType, quantityChanged, stockRemaining, amount, transactionDate) VALUES (?, ?, ?, ?, ?, ?)")) {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO transactions (itemId, description, transactionType, quantityChanged, stockRemaining, amount, transactionDate) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             statement.setInt(1, itemId);
-            statement.setString(2, transactionType);
-            statement.setInt(3, quantityChanged);
-            statement.setInt(4, stockRemaining);
-            statement.setDouble(5, amount);
-            statement.setTimestamp(6, transactionDate);
+            statement.setString(2, description);
+            statement.setString(3, transactionType);
+            statement.setInt(4, quantityChanged);
+            statement.setInt(5, stockRemaining);
+            statement.setDouble(6, amount);
+            statement.setTimestamp(7, transactionDate);
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

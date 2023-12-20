@@ -273,6 +273,9 @@ public class IMController implements AutoCloseable {
         TableColumn<Map<String, Object>, Integer> itemIdColumn = new TableColumn<>("Item ID");
         itemIdColumn.setCellValueFactory(data -> new SimpleObjectProperty<>((Integer) data.getValue().get("itemId")));
 
+        TableColumn<Map<String, Object>, String> descriptionColumn = new TableColumn<>("Description");
+        descriptionColumn.setCellValueFactory(data -> new SimpleObjectProperty<>((String) data.getValue().get("description")));
+
         TableColumn<Map<String, Object>, String> transactionTypeColumn = new TableColumn<>("Transaction Type");
         transactionTypeColumn.setCellValueFactory(data -> new SimpleObjectProperty<>((String) data.getValue().get("transactionType")));
 
@@ -288,13 +291,14 @@ public class IMController implements AutoCloseable {
         TableColumn<Map<String, Object>, Timestamp> transactionDateColumn = new TableColumn<>("Transaction Date");
         transactionDateColumn.setCellValueFactory(data -> new SimpleObjectProperty<>((Timestamp) data.getValue().get("transactionDate")));
 
-        tableView.getColumns().addAll(itemIdColumn, transactionTypeColumn, quantityChangedColumn, stockRemainingColumn, amountColumn, transactionDateColumn);
+        tableView.getColumns().addAll(itemIdColumn, descriptionColumn, transactionTypeColumn, quantityChangedColumn, stockRemainingColumn, amountColumn, transactionDateColumn);
 
         // Fetch and add daily transactions to the TableView using Map
         try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery("SELECT * FROM transactions WHERE transactionDate >= CURDATE()")) {
             while (resultSet.next()) {
                 Map<String, Object> data = new HashMap<>();
                 data.put("itemId", resultSet.getInt("itemId"));
+                data.put("description", resultSet.getString("description"));
                 data.put("transactionType", resultSet.getString("transactionType"));
                 data.put("transactionDate", resultSet.getTimestamp("transactionDate"));
                 data.put("quantityChanged", resultSet.getInt("quantityChanged"));

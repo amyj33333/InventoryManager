@@ -17,7 +17,7 @@ public class IMActions {
             statement.setDouble(5, totalValue);
             statement.executeUpdate();
             // Log the transaction
-            Utils.logTransaction(connection, itemId, "ADD", quantity, quantity, totalValue, Timestamp.valueOf(java.time.LocalDateTime.now()));
+            Utils.logTransaction(connection, itemId, description, "ADD", quantity, quantity, totalValue, Timestamp.valueOf(java.time.LocalDateTime.now()));
         } catch (SQLException e) {
             e.printStackTrace();
             Utils.showAlert("Error", "Failed to add item: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -52,7 +52,7 @@ public class IMActions {
             double transactionAmount = quantityChange * unitPrice;
 
             // Log the transaction
-            Utils.logTransaction(connection, Utils.getItemId(connection, description), "UPDATE", quantityChange, newQuantity, transactionAmount, Timestamp.valueOf(java.time.LocalDateTime.now()));
+            Utils.logTransaction(connection, Utils.getItemId(connection, description), description, "UPDATE", quantityChange, newQuantity, transactionAmount, Timestamp.valueOf(java.time.LocalDateTime.now()));
         } catch (SQLException e) {
             e.printStackTrace();
             Utils.showAlert("Error", "Failed to update item quantity: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -91,7 +91,7 @@ public class IMActions {
             // Check if the deletion was successful before logging the transaction
             if (rowsAffected > 0) {
                 // Log the transaction
-                Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -removedQuantity, 0, 0.00, Timestamp.valueOf(java.time.LocalDateTime.now()));
+                Utils.logTransaction(connection, Utils.getItemId(connection, description), description, "DELETE", -removedQuantity, 0, 0.00, Timestamp.valueOf(java.time.LocalDateTime.now()));
             }
 
             return rowsAffected;
