@@ -27,32 +27,59 @@ public class IMActions {
     // Update the quantity of an item in the database
     static void updateItemQuantity(Connection connection, String description, int newQuantity) {
         int oldQuantity = Utils.getCurrentQuantity(connection, description);
-        //Select the item from the database
+
+        // Select the item from the database
         try (PreparedStatement statement = connection.prepareStatement("UPDATE items SET quantity = ? WHERE description = ?")) {
             // Update the item in the database
             statement.setInt(1, newQuantity);
             statement.setString(2, description);
             statement.executeUpdate();
+
+            // Fetch the unit price
+            double unitPrice;
+            try (PreparedStatement selectStatement = connection.prepareStatement("SELECT unitPrice FROM items WHERE description = ?")) {
+                selectStatement.setString(1, description);
+                try (ResultSet resultSet = selectStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        unitPrice = resultSet.getDouble("unitPrice");
+                    } else {
+                        unitPrice = 0.0;
+                    }
+                }
+            }
+
+            int quantityChange = Math.abs(oldQuantity - newQuantity);
+            double transactionAmount = quantityChange * unitPrice;
+
             // Log the transaction
-            Utils.logTransaction(connection, Utils.getItemId(connection, description), "UPDATE", Math.abs(oldQuantity - newQuantity), newQuantity, 0, Timestamp.valueOf(java.time.LocalDateTime.now()));
+            Utils.logTransaction(connection, Utils.getItemId(connection, description), "UPDATE", quantityChange, newQuantity, transactionAmount, Timestamp.valueOf(java.time.LocalDateTime.now()));
         } catch (SQLException e) {
             e.printStackTrace();
             Utils.showAlert("Error", "Failed to update item quantity: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
+
+
     // Remove an item from the database
     static int removeItem(Connection connection, String description) {
-        // Select the item from the database to check if it exists
-        try (PreparedStatement selectStatement = connection.prepareStatement("SELECT COUNT(*) FROM items WHERE description = ?")) {
-            selectStatement.setString(1, description);
-            try (ResultSet resultSet = selectStatement.executeQuery()) {
-                resultSet.next();
-                int count = resultSet.getInt(1);
+        int removedQuantity = 0;
+        double removedUnitPrice = 0.0;
+        double amountRemoved = 0.0;
 
-                // Check if the item exists in the database
-                if (count == 0) {
-                    return 0;
+        // Select the item from the database to check if it exists
+        try (PreparedStatement selectStatement = connection.prepareStatement("SELECT quantity FROM items WHERE description = ?")) {
+            selectStatement.setString(1, description);
+
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Item exists in the database, get the quantity to be removed for logging
+                    removedQuantity = resultSet.getInt("quantity");
+                    removedUnitPrice = resultSet.getDouble("unitPrice");
+                    amountRemoved = removedQuantity * removedUnitPrice;
+                    
+                } else {
+                    return 0; // Item not found, return 0
                 }
             }
         } catch (SQLException e) {
@@ -68,15 +95,15 @@ public class IMActions {
             // Check if the deletion was successful before logging the transaction
             if (rowsAffected > 0) {
                 // Log the transaction
-                Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -Utils.getCurrentQuantity(connection, description), 0, 0, Timestamp.valueOf(java.time.LocalDateTime.now()));
+                Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -removedQuantity, 0, -amountRemoved, Timestamp.valueOf(java.time.LocalDateTime.now()));
             }
+
             return rowsAffected;
         } catch (SQLException e) {
             e.printStackTrace();
             return 0;
         }
     }
-
 
 
     // search for items by description in the database and display the results
