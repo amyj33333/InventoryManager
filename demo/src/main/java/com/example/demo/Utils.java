@@ -35,7 +35,6 @@ public class Utils {
             e.printStackTrace();
             Utils.showAlert("Error", "Failed to generate item ID: " + e.getMessage(), Alert.AlertType.ERROR);
         }
-
         // Format the itemId as a 5-digit string with leading zeros
         return parseInt(String.format("%05d", itemId));
     }

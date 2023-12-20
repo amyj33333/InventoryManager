@@ -25,7 +25,7 @@ public class IMActions {
     }
 
     // Update the quantity of an item in the database
-    static Object updateItemQuantity(Connection connection, String description, int newQuantity) {
+    static void updateItemQuantity(Connection connection, String description, int newQuantity) {
         int oldQuantity = Utils.getCurrentQuantity(connection, description);
         //Select the item from the database
         try (PreparedStatement statement = connection.prepareStatement("UPDATE items SET quantity = ? WHERE description = ?")) {
@@ -39,11 +39,10 @@ public class IMActions {
             e.printStackTrace();
             Utils.showAlert("Error", "Failed to update item quantity: " + e.getMessage(), Alert.AlertType.ERROR);
         }
-        return null;
     }
 
     // Remove an item from the database
-    static Object removeItem(Connection connection, String description) {
+    static void removeItem(Connection connection, String description) {
         // Select the item from the database
         try (PreparedStatement statement = connection.prepareStatement("DELETE FROM items WHERE description = ?")) {
             // Delete the item from the database
@@ -55,11 +54,10 @@ public class IMActions {
             e.printStackTrace();
             Utils.showAlert("Error", "Failed to remove item: " + e.getMessage(), Alert.AlertType.ERROR);
         }
-        return null;
     }
 
     // search for items by description in the database and display the results
-    static Object searchForItem(Connection connection, String description) {
+    static void searchForItem(Connection connection, String description) {
         try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM items WHERE description = ?")) {
             statement.setString(1, description);
             ResultSet resultSet = statement.executeQuery();
@@ -81,6 +79,5 @@ public class IMActions {
             e.printStackTrace();
             Utils.showAlert("Error", "Failed to search for item: " + e.getMessage(), Alert.AlertType.ERROR);
         }
-        return null;
     }
 }
