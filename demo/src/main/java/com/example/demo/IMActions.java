@@ -64,8 +64,6 @@ public class IMActions {
     // Remove an item from the database
     static int removeItem(Connection connection, String description) {
         int removedQuantity = 0;
-        double removedUnitPrice = 0.0;
-        double amountRemoved = 0.0;
 
         // Select the item from the database to check if it exists
         try (PreparedStatement selectStatement = connection.prepareStatement("SELECT quantity FROM items WHERE description = ?")) {
@@ -75,8 +73,6 @@ public class IMActions {
                 if (resultSet.next()) {
                     // Item exists in the database, get the quantity to be removed for logging
                     removedQuantity = resultSet.getInt("quantity");
-                    removedUnitPrice = resultSet.getDouble("unitPrice");
-                    amountRemoved = removedQuantity * removedUnitPrice;
                     
                 } else {
                     return 0; // Item not found, return 0
@@ -95,7 +91,7 @@ public class IMActions {
             // Check if the deletion was successful before logging the transaction
             if (rowsAffected > 0) {
                 // Log the transaction
-                Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -removedQuantity, 0, -amountRemoved, Timestamp.valueOf(java.time.LocalDateTime.now()));
+                Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -removedQuantity, 0, 0.00, Timestamp.valueOf(java.time.LocalDateTime.now()));
             }
 
             return rowsAffected;
