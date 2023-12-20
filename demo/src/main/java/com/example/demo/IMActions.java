@@ -63,7 +63,7 @@ public class IMActions {
 
     // Remove an item from the database
     static int removeItem(Connection connection, String description) {
-        int removedQuantity = 0;
+        int removedQuantity;
 
         // Select the item from the database to check if it exists
         try (PreparedStatement selectStatement = connection.prepareStatement("SELECT quantity FROM items WHERE description = ?")) {

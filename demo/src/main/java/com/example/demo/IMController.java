@@ -273,6 +273,7 @@ public class IMController implements AutoCloseable {
     }
 
     // Show the daily transactions report
+    @SuppressWarnings("unchecked")
     @FXML
     private void dailyTransactionReportGui() {
         Stage stage = new Stage();
