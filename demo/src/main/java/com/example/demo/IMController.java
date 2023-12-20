@@ -129,62 +129,72 @@ public class IMController implements AutoCloseable {
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == searchButton) {
                 String itemDescription = description.getText();
-                int currentQty = Utils.getCurrentQuantity(connection, itemDescription);
-                if (currentQty >= 0) {
-                    // Item found, now prompt for the new quantity
-                    Dialog<Integer> updateDialog = new Dialog<>();
-                    updateDialog.setTitle("Update Quantity");
-                    Label currentQuantityLabel = new Label("Current quantity:");
-                    Label currentQuantityValue = new Label(String.valueOf(currentQty));
-                    updateDialog.setHeaderText("Enter the new quantity");
 
-                    ButtonType updateButton = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
-                    updateDialog.getDialogPane().getButtonTypes().addAll(updateButton, ButtonType.CANCEL);
+                // Check if the item exists before proceeding
+                try (PreparedStatement selectStatement = connection.prepareStatement("SELECT COUNT(*) FROM items WHERE description = ?")) {
+                    selectStatement.setString(1, itemDescription);
+                    try (ResultSet resultSet = selectStatement.executeQuery()) {
+                        if (resultSet.next() && resultSet.getInt(1) > 0) {
+                            // Item found, now prompt for the new quantity
+                            Dialog<Integer> updateDialog = new Dialog<>();
+                            updateDialog.setTitle("Update Quantity");
+                            Label currentQuantityLabel = new Label("Current quantity:");
+                            Label currentQuantityValue = new Label(String.valueOf(Utils.getCurrentQuantity(connection, itemDescription)));
+                            updateDialog.setHeaderText("Enter the new quantity");
 
-                    GridPane updateGrid = new GridPane();
-                    updateGrid.setHgap(10);
-                    updateGrid.setVgap(10);
-                    updateGrid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
+                            ButtonType updateButton = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
+                            updateDialog.getDialogPane().getButtonTypes().addAll(updateButton, ButtonType.CANCEL);
 
-                    TextField newQuantity = new TextField();
+                            GridPane updateGrid = new GridPane();
+                            updateGrid.setHgap(10);
+                            updateGrid.setVgap(10);
+                            updateGrid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
 
-                    // Set up real-time input validation for quantity
-                    newQuantity.textProperty().addListener((observable, oldValue, newValue) -> {
-                        if (!newValue.matches("\\d*")) {
-                            newQuantity.setText(oldValue);
+                            TextField newQuantity = new TextField();
+
+                            // Set up real-time input validation for quantity
+                            newQuantity.textProperty().addListener((observable, oldValue, newValue) -> {
+                                if (!newValue.matches("\\d*")) {
+                                    newQuantity.setText(oldValue);
+                                }
+                            });
+
+                            updateGrid.add(currentQuantityLabel, 0, 0);
+                            updateGrid.add(currentQuantityValue, 1, 0);
+                            updateGrid.add(new Label("New quantity:"), 0, 1);
+                            updateGrid.add(newQuantity, 1, 1);
+
+                            updateDialog.getDialogPane().setContent(updateGrid);
+
+                            updateDialog.setResultConverter(updateDialogButton -> {
+                                if (updateDialogButton == updateButton) {
+                                    try {
+                                        return Integer.parseInt(newQuantity.getText());
+                                    } catch (NumberFormatException e) {
+                                        Utils.showAlert("Error", "Invalid input for new quantity.", Alert.AlertType.ERROR);
+                                    }
+                                }
+                                return null;
+                            });
+
+                            updateDialog.showAndWait().ifPresent(result -> {
+                                IMActions.updateItemQuantity(connection, itemDescription, result);
+                                Utils.showAlert("Item quantity updated successfully.", "New quantity: " + result, Alert.AlertType.CONFIRMATION);
+                            });
+                        } else {
+                            Utils.showAlert("Item Not Found", "No item found with the given description.", Alert.AlertType.ERROR);
                         }
-                    });
-
-                    updateGrid.add(currentQuantityLabel, 0, 0);
-                    updateGrid.add(currentQuantityValue, 1, 0);
-                    updateGrid.add(new Label("New quantity:"), 0, 1);
-                    updateGrid.add(newQuantity, 1, 1);
-
-                    updateDialog.getDialogPane().setContent(updateGrid);
-
-                    updateDialog.setResultConverter(updateDialogButton -> {
-                        if (updateDialogButton == updateButton) {
-                            try {
-                                return Integer.parseInt(newQuantity.getText());
-                            } catch (NumberFormatException e) {
-                                Utils.showAlert("Error", "Invalid input for new quantity.", Alert.AlertType.ERROR);
-                            }
-                        }
-                        return null;
-                    });
-
-                    updateDialog.showAndWait().ifPresent(result -> {
-                        IMActions.updateItemQuantity(connection, itemDescription, result);
-                        Utils.showAlert("Item quantity updated successfully.", "New quantity: " + result, Alert.AlertType.CONFIRMATION);
-                    });
-                } else {
-                    Utils.showAlert("Item Not Found", "No item found with the given description.", Alert.AlertType.ERROR);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    Utils.showAlert("Error", "Failed to search for item: " + e.getMessage(), Alert.AlertType.ERROR);
                 }
             }
             return null;
         });
         dialog.showAndWait();
     }
+
 
 
     // Remove an item from the inventory
