@@ -217,10 +217,18 @@ public class IMController implements AutoCloseable {
         });
 
         dialog.showAndWait().ifPresent(result -> {
-            IMActions.removeItem(connection, result);
-            Utils.showAlert("Item removed successfully.", "Item description: " + result, Alert.AlertType.CONFIRMATION);
+            // Attempt to remove the item
+            int rowsAffected = IMActions.removeItem(connection, result);
+
+            // Check if the item was actually removed
+            if (rowsAffected > 0) {
+                Utils.showAlert("Item removed successfully.", "Item description: " + result, Alert.AlertType.CONFIRMATION);
+            } else {
+                Utils.showAlert("Error", "Failed to remove item or item not found.", Alert.AlertType.ERROR);
+            }
         });
     }
+
 
     // Search for an item in the inventory
     @FXML

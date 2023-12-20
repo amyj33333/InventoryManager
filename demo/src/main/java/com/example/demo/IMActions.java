@@ -42,19 +42,42 @@ public class IMActions {
     }
 
     // Remove an item from the database
-    static void removeItem(Connection connection, String description) {
-        // Select the item from the database
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM items WHERE description = ?")) {
-            // Delete the item from the database
-            statement.setString(1, description);
-            statement.executeUpdate();
-            // Log the transaction
-            Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -Utils.getCurrentQuantity(connection, description), 0, 0, Timestamp.valueOf(java.time.LocalDateTime.now()));
+    static int removeItem(Connection connection, String description) {
+        // Select the item from the database to check if it exists
+        try (PreparedStatement selectStatement = connection.prepareStatement("SELECT COUNT(*) FROM items WHERE description = ?")) {
+            selectStatement.setString(1, description);
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                resultSet.next();
+                int count = resultSet.getInt(1);
+
+                // Check if the item exists in the database
+                if (count == 0) {
+                    return 0;
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
-            Utils.showAlert("Error", "Failed to remove item: " + e.getMessage(), Alert.AlertType.ERROR);
+            return 0;
+        }
+
+        // Delete the item from the database
+        try (PreparedStatement deleteStatement = connection.prepareStatement("DELETE FROM items WHERE description = ?")) {
+            deleteStatement.setString(1, description);
+            int rowsAffected = deleteStatement.executeUpdate();
+
+            // Check if the deletion was successful before logging the transaction
+            if (rowsAffected > 0) {
+                // Log the transaction
+                Utils.logTransaction(connection, Utils.getItemId(connection, description), "DELETE", -Utils.getCurrentQuantity(connection, description), 0, 0, Timestamp.valueOf(java.time.LocalDateTime.now()));
+            }
+            return rowsAffected;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
         }
     }
+
+
 
     // search for items by description in the database and display the results
     static void searchForItem(Connection connection, String description) {
